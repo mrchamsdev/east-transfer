@@ -120,9 +120,10 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
         title: Text(
           'Customer Details',
           style: AppTextStyles.h1.copyWith(
-            fontSize: 14.sp,
+            fontSize: 13.sp,
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
+
           ),
         ),
         centerTitle: true,
