@@ -17,8 +17,8 @@ class AddSaleModal extends StatefulWidget {
 
   const AddSaleModal({super.key, required this.purchase});
 
-  static Future<void> show(BuildContext context, GoldPurchase purchase) async {
-    await showModalBottomSheet(
+  static Future<bool?> show(BuildContext context, GoldPurchase purchase) async {
+    return await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -216,7 +216,9 @@ class _AddSaleModalState extends State<AddSaleModal> {
   }
 
   Future<void> _handleSoldOut() async {
+    debugPrint('--- _handleSoldOut CLICKED ---');
     if (_partyNameController.text.trim().isEmpty) {
+      debugPrint('Validation Failed: Party Name is empty');
       GoldDialogs.showSnackBar(context, 'Please enter party name',
           isError: true);
       return;
@@ -224,6 +226,7 @@ class _AddSaleModalState extends State<AddSaleModal> {
 
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
+      debugPrint('Validation Failed: Phone number is empty');
       setState(() => _phoneErrorText = 'Please enter phone number');
       GoldDialogs.showSnackBar(context, 'Please enter phone number',
           isError: true);
@@ -231,6 +234,7 @@ class _AddSaleModalState extends State<AddSaleModal> {
     }
 
     if (!_isPhoneNumberValid(phone, _selectedCountry)) {
+      debugPrint('Validation Failed: Phone number $phone is invalid for ${_selectedCountry.name}');
       setState(() => _phoneErrorText = 'Invalid phone number for ${_selectedCountry.name}');
       GoldDialogs.showSnackBar(
           context,
@@ -240,14 +244,18 @@ class _AddSaleModalState extends State<AddSaleModal> {
     }
 
     if (_amountController.text.isEmpty) {
+      debugPrint('Validation Failed: Amount is empty');
       GoldDialogs.showSnackBar(context, 'Please enter sale amount',
           isError: true);
       return;
     }
 
+    debugPrint('Validation Passed. Preparing API request...');
     setState(() => _isLoading = true);
     try {
-      final partyId = widget.purchase.party?.id ?? widget.purchase.id ?? 1;
+      final purchaseId = widget.purchase.id ?? 1;
+      debugPrint('Derived purchaseId: $purchaseId');
+      
       final payload = {
         "status": "SALE",
         "soldOut": true,
@@ -257,16 +265,16 @@ class _AddSaleModalState extends State<AddSaleModal> {
         "salePartyPhoneNumber": _buildPhoneNumber(),
         "saleDlNumber": _dlNumberController.text.trim(),
       };
+      debugPrint('Payload prepared: $payload');
 
-      final success = await _repository.updateParty(partyId, payload);
+      debugPrint('Calling _repository.updateGoldPartial...');
+      final success = await _repository.updateGoldPartial(purchaseId, payload);
+      debugPrint('API call finished. Success: $success');
 
       if (success) {
         if (mounted) {
           GoldDialogs.showSnackBar(context, 'Marked as Sold Out!');
           Navigator.pop(context, true); // Close modal
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context, true); // Refresh parent screen safely
-          }
         }
       } else {
         if (mounted) {

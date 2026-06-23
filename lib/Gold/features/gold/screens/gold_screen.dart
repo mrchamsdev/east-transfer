@@ -216,7 +216,12 @@ class GoldScreenState extends State<GoldScreen> with RouteAware {
           },
           child: GoldRecordCard(
             purchase: item,
-            onSell: () => AddSaleModal.show(context, item),
+            onSell: () async {
+              final result = await AddSaleModal.show(context, item);
+              if (result == true) {
+                _fetchData();
+              }
+            },
           ),
         );
       }

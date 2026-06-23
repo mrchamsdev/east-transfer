@@ -233,6 +233,7 @@ class _AddGoldPurchaseScreenState extends State<AddGoldPurchaseScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    print('--- _handleSubmit CLICKED (CREATE/UPDATE) ---');
     // 1. Party Name
     final partyName = _partyNameController.text.trim();
     if (partyName.isEmpty) {
@@ -353,12 +354,14 @@ class _AddGoldPurchaseScreenState extends State<AddGoldPurchaseScreen> {
       return;
     }
 
+    print('Validation Passed. Preparing to send data...');
     setState(() => _isLoading = true);
 
     try {
       final taxPercentVal = royaltyVal + traVal + svlVal;
       final taxVal = (amountVal * taxPercentVal) / 100;
       final calculatedAmountVal = amountVal - taxVal;
+      print('Calculated Amount: $calculatedAmountVal, Total Tax: $taxVal');
 
       final purchase = GoldPurchase(
         purchaseDate: _getFormattedDate(_selectedDate),
@@ -389,8 +392,10 @@ class _AddGoldPurchaseScreenState extends State<AddGoldPurchaseScreen> {
       );
 
       if (widget.purchase != null) {
+        print('UPDATING existing purchase (ID: ${widget.purchase!.id})...');
         final success =
             await _repository.updateGold(widget.purchase!.id!, purchase);
+        print('updateGold finished. Success: $success');
         if (success) {
           final newItems =
               _billedItems.where((item) => item.id == null).toList();
@@ -410,12 +415,16 @@ class _AddGoldPurchaseScreenState extends State<AddGoldPurchaseScreen> {
         return;
       }
 
+      print('CREATING new purchase via POST...');
       final purchaseId = await _repository.createGold(purchase);
+      print('createGold finished. Received purchaseId: $purchaseId');
 
       if (purchaseId != null) {
         if (_billedItems.isNotEmpty) {
+          print('Adding ${_billedItems.length} items to new purchaseId $purchaseId...');
           final itemsSuccess =
               await _repository.createItems(purchaseId, _billedItems);
+          print('createItems finished. Success: $itemsSuccess');
           if (itemsSuccess) {
             GoldDialogs.showSnackBar(context, 'Purchase created successfully!');
             Navigator.pop(context, true);
