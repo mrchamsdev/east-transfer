@@ -40,7 +40,7 @@ class GoldApiConstants {
   
   static String get createGold => '$baseUrl/gold/createGold';
   static String get createItems => '$baseUrl/gold/createItems';
-  static String updateParty(String id) => '$baseUrl/gold/updateGold/$id';
+  static String updateParty(String id) => '$baseUrl/gold/updateParty/$id';
   static String updateGold(String id) => '$baseUrl/gold/updateGold/$id';
   static String get updateItems => '$baseUrl/gold/updateItems';
   static String deleteGold(String id) => '$baseUrl/gold/gold/$id';

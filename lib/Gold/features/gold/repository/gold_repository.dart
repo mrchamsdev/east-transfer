@@ -117,6 +117,24 @@ class GoldRepository {
     }
   }
 
+  /// Update Gold purchase details partially
+  /// PUT /api/gold/updateGold/:id
+  Future<bool> updateGoldPartial(int id, Map<String, dynamic> data) async {
+    try {
+      if (kDebugMode) print('[GoldRepository] PUT updateGoldPartial ID: $id');
+      if (kDebugMode) print('[GoldRepository] Payload: $data');
+      final response = await _dio.put(
+        GoldApiConstants.updateGold(id.toString()),
+        data: data,
+      );
+      if (kDebugMode) print('[GoldRepository] Response Status: ${response.statusCode}');
+      return response.statusCode == 200;
+    } catch (e) {
+      if (kDebugMode) print('[GoldRepository] Error updateGoldPartial: $e');
+      rethrow;
+    }
+  }
+
   /// Delete Gold purchase
   /// DELETE /api/gold/gold/:id
   Future<bool> deleteGold(int id) async {

@@ -770,7 +770,12 @@ class _GoldDetailsScreenState extends State<GoldDetailsScreen> {
       width: double.infinity,
       height: 7.h,
       child: ElevatedButton(
-        onPressed: () => AddSaleModal.show(context, purchase),
+        onPressed: () async {
+          final result = await AddSaleModal.show(context, purchase);
+          if (result == true && purchase.id != null) {
+            _fetchDetails(purchase.id!);
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
           shape: RoundedRectangleBorder(
