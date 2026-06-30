@@ -10,8 +10,16 @@ class PaymentUpdateModal extends StatefulWidget {
   final int loanId;
   final Map<String, dynamic>? initialData;
   final int? paymentId;
+  final num? currentPendingPrincipal;
 
-  const PaymentUpdateModal({super.key, required this.personId, required this.loanId, this.initialData, this.paymentId});
+  const PaymentUpdateModal({
+    super.key,
+    required this.personId,
+    required this.loanId,
+    this.initialData,
+    this.paymentId,
+    this.currentPendingPrincipal,
+  });
 
   @override
   State<PaymentUpdateModal> createState() => _PaymentUpdateModalState();
@@ -35,7 +43,21 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
 
   static const Map<String, String> _typeNames = {
     'RUPEES': 'Rupees',
-    'CASH': 'Cash',
+    // 'CASH': 'Cash',
+    'USD': 'US Dollar (\$)',
+    'EUR': 'Euro (€)',
+    'GBP': 'UK Pound (£)',
+    'JPY': 'Japanese Yen (¥)',
+    'AUD': 'Australian Dollar (A\$)',
+    'CAD': 'Canadian Dollar (C\$)',
+    'CHF': 'Swiss Franc (CHF)',
+    'CNY': 'Chinese Yuan (CN¥)',
+    'HKD': 'Hong Kong Dollar (HK\$)',
+    'NZD': 'New Zealand Dollar (NZ\$)',
+    'SGD': 'Singapore Dollar (S\$)',
+    'AED': 'UAE Dirham (د.إ)',
+    'SAR': 'Saudi Riyal (﷼)',
+    'ZAR': 'South African Rand (R)',
   };
 
   static const Map<String, String> _paymentTypeNames = {
@@ -47,24 +69,41 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
   @override
   void initState() {
     super.initState();
-    _interestAmountType = 'CASH';
-    _principalAmountType = 'CASH';
+    _interestAmountType = 'RUPEES';
+    _principalAmountType = 'RUPEES';
     _paymentType = 'CASH';
     if (widget.initialData != null) {
       final data = widget.initialData!;
       _dateCtrl.text = data['paymentDate'] ?? '';
-      _interestAmountType = data['interestAmountType'] ?? 'CASH';
+      _interestAmountType = data['interestAmountType'] ?? 'RUPEES';
       _interestAmountCtrl.text = data['interestAmount']?.toString() ?? '';
-      _principalAmountType = data['principalAmountType'] ?? 'CASH';
+      _principalAmountType = data['principalAmountType'] ?? 'RUPEES';
       _principalAmountCtrl.text = data['principalAmount']?.toString() ?? '';
       _remainingBalanceCtrl.text = data['remainingBalance']?.toString() ?? '';
       _referenceNumberCtrl.text = data['referenceNUmber'] ?? '';
       _paymentType = data['paymentTYpe'] ?? 'CASH';
     }
+    
+    _principalAmountCtrl.addListener(_onPrincipalChanged);
+  }
+
+  void _onPrincipalChanged() {
+    if (widget.currentPendingPrincipal != null) {
+      final text = _principalAmountCtrl.text.trim();
+      if (text.isEmpty) {
+        _remainingBalanceCtrl.text = '';
+      } else {
+        final entered = double.tryParse(text) ?? 0.0;
+        final remaining = widget.currentPendingPrincipal! - entered;
+        // Format to 2 decimal places to keep it clean
+        _remainingBalanceCtrl.text = remaining.toStringAsFixed(2);
+      }
+    }
   }
 
   @override
   void dispose() {
+    _principalAmountCtrl.removeListener(_onPrincipalChanged);
     _dateCtrl.dispose();
     _interestAmountCtrl.dispose();
     _principalAmountCtrl.dispose();
@@ -122,38 +161,51 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
   ) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
+                  ),
                 ),
-              ),
-              const Divider(height: 1),
-              ...options.map((option) => ListTile(
-                    title: Text(
-                      displayNames[option] ?? option,
-                      style: TextStyle(
-                        fontWeight: option == currentValue ? FontWeight.bold : FontWeight.normal,
-                        color: option == currentValue ? AppColors.primaryBlue : AppColors.textPrimary,
-                      ),
+                const Divider(height: 1),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: options.map((option) => ListTile(
+                        title: Text(
+                          displayNames[option] ?? option,
+                          style: TextStyle(
+                            fontWeight: option == currentValue ? FontWeight.bold : FontWeight.normal,
+                            color: option == currentValue ? AppColors.primaryBlue : AppColors.textPrimary,
+                          ),
+                        ),
+                        trailing: option == currentValue ? const Icon(Icons.check, color: AppColors.primaryBlue) : null,
+                        onTap: () {
+                          onSelected(option);
+                          Navigator.pop(context);
+                        },
+                      )).toList(),
                     ),
-                    trailing: option == currentValue ? const Icon(Icons.check, color: AppColors.primaryBlue) : null,
-                    onTap: () {
-                      onSelected(option);
-                      Navigator.pop(context);
-                    },
-                  )),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -189,9 +241,9 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
       final data = {
         'loanId': widget.loanId,
         'paymentDate': dateStr,
-        'interestAmountType': _interestAmountType ?? 'CASH',
+        'interestAmountType': _interestAmountType ?? 'RUPEES',
         'interestAmount': interestStr,
-        'principalAmountType': _principalAmountType ?? 'CASH',
+        'principalAmountType': _principalAmountType ?? 'RUPEES',
         'principalAmount': principalStr,
         'paymentTYpe': _paymentType ?? 'CASH',
         'referenceNUmber': refStr,
@@ -373,7 +425,7 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
                     hintText: '0.00',
                     onDropdownTap: () => _showSelectionBottomSheet(
                       'Interest Type',
-                      ['RUPEES', 'CASH'],
+                      ['RUPEES', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SGD', 'AED', 'SAR', 'ZAR'],
                       _interestAmountType,
                       _typeNames,
                       (val) => setState(() => _interestAmountType = val),
@@ -386,7 +438,7 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
                     hintText: '0.00',
                     onDropdownTap: () => _showSelectionBottomSheet(
                       'Principal Type',
-                      ['RUPEES', 'CASH'],
+                      ['RUPEES', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SGD', 'AED', 'SAR', 'ZAR'],
                       _principalAmountType,
                       _typeNames,
                       (val) => setState(() => _principalAmountType = val),
@@ -398,11 +450,12 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
                     hint: '0.00',
                     keyboardType: TextInputType.number,
                   ),
-                  GoldDetailInputField(
-                    label: 'Reference Number',
-                    controller: _referenceNumberCtrl,
-                    hint: 'Enter reference',
-                  ),
+                  if (_paymentType != 'CASH')
+                    GoldDetailInputField(
+                      label: 'Reference Number',
+                      controller: _referenceNumberCtrl,
+                      hint: 'Enter reference',
+                    ),
                   GoldDetailInputField(
                     label: 'Payment Type',
                     value: _paymentTypeNames[_paymentType] ?? 'Select Type',

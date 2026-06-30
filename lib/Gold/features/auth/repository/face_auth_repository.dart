@@ -37,7 +37,7 @@ class FaceAuthRepository {
     try {
       final url = '${GoldApiConstants.baseUrl}/users/enableFace';
       final payload = {
-        'biometricDeviceId': biometricDeviceId,
+        'faceIdDeviceId': biometricDeviceId,
       };
 
       debugPrint('--- API CALL: enableFace ---');
@@ -77,7 +77,7 @@ class FaceAuthRepository {
       final url = '${GoldApiConstants.baseUrl}/users/faceLogin';
       final payload = {
         'email': email,
-        'biometricDeviceId': biometricDeviceId,
+        'faceIdDeviceId': biometricDeviceId,
       };
 
       debugPrint('--- API CALL: faceLogin ---');
@@ -108,6 +108,83 @@ class FaceAuthRepository {
       }
     } catch (e) {
       return FaceAuthResponse.error('Network error during Face Login');
+    }
+  }
+  Future<FaceAuthResponse> enableBiometric(String token, String biometricDeviceId) async {
+    try {
+      final url = '${GoldApiConstants.baseUrl}/users/enableBiometric';
+      final payload = {
+        'biometricDeviceId': biometricDeviceId,
+      };
+
+      debugPrint('--- API CALL: enableBiometric ---');
+      debugPrint('URL: $url');
+      debugPrint('Headers: Authorization: Bearer $token, device-id: $biometricDeviceId');
+      debugPrint('Payload: ${jsonEncode(payload)}');
+      debugPrint('----------------------------');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'device-id': biometricDeviceId,
+        },
+        body: jsonEncode(payload),
+      );
+
+      debugPrint('--- API RESPONSE: enableBiometric ---');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      debugPrint('--------------------------------');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        return FaceAuthResponse.success(decoded);
+      } else {
+        return FaceAuthResponse.error(_extractError(response, 'Failed to enable Biometric'));
+      }
+    } catch (e) {
+      return FaceAuthResponse.error('Network error while enabling Biometric');
+    }
+  }
+
+  Future<FaceAuthResponse> bioLogin(String email, String biometricDeviceId) async {
+    try {
+      final url = '${GoldApiConstants.baseUrl}/users/BioLogin';
+      final payload = {
+        'email': email,
+        'biometricDeviceId': biometricDeviceId,
+      };
+
+      debugPrint('--- API CALL: BioLogin ---');
+      debugPrint('URL: $url');
+      debugPrint('Headers: device-id: $biometricDeviceId');
+      debugPrint('Payload: ${jsonEncode(payload)}');
+      debugPrint('---------------------------');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'device-id': biometricDeviceId,
+        },
+        body: jsonEncode(payload),
+      );
+
+      debugPrint('--- API RESPONSE: BioLogin ---');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      debugPrint('-------------------------------');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        return FaceAuthResponse.success(decoded);
+      } else {
+        return FaceAuthResponse.error(_extractError(response, 'Biometric Login failed'));
+      }
+    } catch (e) {
+      return FaceAuthResponse.error('Network error during Biometric Login');
     }
   }
 }

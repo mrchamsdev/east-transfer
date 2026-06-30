@@ -20,7 +20,8 @@ class FaceIdScreen extends StatefulWidget {
 class _FaceIdScreenState extends State<FaceIdScreen> {
   final _secureStorage = const FlutterSecureStorage();
   final _localAuth = LocalAuthentication();
-  bool _isFaceIdEnabled = true;
+  bool _isFaceIdEnabled = false;
+  bool _isBiometricEnabled = false;
   bool _isLoading = false;
 
   @override
@@ -30,42 +31,14 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
   }
 
   Future<void> _loadState() async {
-    final enabled = await _secureStorage.read(key: 'isFaceEnabled');
-    final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
-
-    if (enabled == 'false') {
-      if (mounted) {
-        setState(() {
-          _isFaceIdEnabled = false;
-        });
-      }
-      return;
-    }
+    final faceEnabled = await _secureStorage.read(key: 'isFaceEnabled');
+    final bioEnabled = await _secureStorage.read(key: 'isBiometricEnabled');
 
     if (mounted) {
       setState(() {
-        _isFaceIdEnabled = true;
+        _isFaceIdEnabled = faceEnabled == 'true';
+        _isBiometricEnabled = bioEnabled == 'true';
       });
-    }
-
-    if (enabled != 'true' || deviceId == null) {
-      try {
-        final canCheck = await _localAuth.canCheckBiometrics;
-        final isSupported = await _localAuth.isDeviceSupported();
-        if (canCheck && isSupported) {
-          final token = GoldSession.instance.token;
-          if (token != null && token.isNotEmpty) {
-            final newDeviceId = await _getDeviceId();
-            final res = await FaceAuthRepository.instance.enableFace(token, newDeviceId);
-            if (res.isSuccess) {
-              await _secureStorage.write(key: 'isFaceEnabled', value: 'true');
-              await _secureStorage.write(key: 'biometricDeviceId', value: newDeviceId);
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Silent auto-register in settings failed: $e');
-      }
     }
   }
 
@@ -95,10 +68,8 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
     if (_isLoading) return;
 
     if (!enable) {
-      // Disabling Face ID
       setState(() => _isLoading = true);
       await _secureStorage.delete(key: 'isFaceEnabled');
-      await _secureStorage.delete(key: 'biometricDeviceId');
       setState(() {
         _isFaceIdEnabled = false;
         _isLoading = false;
@@ -106,13 +77,17 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
       return;
     }
 
-    // Enabling Face ID
     try {
       final canCheckBiometrics = await _localAuth.canCheckBiometrics;
-      final isDeviceSupported = await _localAuth.isDeviceSupported();
+      if (!canCheckBiometrics) return;
 
-      if (!canCheckBiometrics || !isDeviceSupported) {
-        _showError('Biometric authentication is not supported on this device.');
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      if (!availableBiometrics.contains(BiometricType.face) && !availableBiometrics.contains(BiometricType.strong)) {
+        _showError('Face Recognition is not available on this device. Please use Fingerprint.');
+        setState(() {
+          _isFaceIdEnabled = false;
+          _isLoading = false;
+        });
         return;
       }
 
@@ -123,8 +98,8 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
       if (didAuthenticate) {
         setState(() => _isLoading = true);
         final token = GoldSession.instance.token;
-        if (token == null || token.isEmpty) {
-          _showError('Session expired. Please login again.');
+        if (token == null) {
+          _showError('Session expired.');
           setState(() => _isLoading = false);
           return;
         }
@@ -137,11 +112,65 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
           await _secureStorage.write(key: 'biometricDeviceId', value: deviceId);
           setState(() => _isFaceIdEnabled = true);
         } else {
-          _showError(faceRes.message ?? 'Failed to enable Face ID on server.');
+          _showError(faceRes.message ?? 'Failed to enable Face ID.');
         }
       }
-    } catch (e) {
-      _showError('Authentication error. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleBiometric(bool enable) async {
+    if (_isLoading) return;
+
+    if (!enable) {
+      setState(() => _isLoading = true);
+      await _secureStorage.delete(key: 'isBiometricEnabled');
+      setState(() {
+        _isBiometricEnabled = false;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      if (!canCheckBiometrics) return;
+
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      if (!availableBiometrics.contains(BiometricType.fingerprint) && !availableBiometrics.contains(BiometricType.strong)) {
+        _showError('Fingerprint is not available on this device. Please use Face ID.');
+        setState(() {
+          _isBiometricEnabled = false;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Authenticate to enable Biometric',
+      );
+
+      if (didAuthenticate) {
+        setState(() => _isLoading = true);
+        final token = GoldSession.instance.token;
+        if (token == null) {
+          _showError('Session expired.');
+          setState(() => _isLoading = false);
+          return;
+        }
+
+        final deviceId = await _getDeviceId();
+        final bioRes = await FaceAuthRepository.instance.enableBiometric(token, deviceId);
+
+        if (bioRes.isSuccess) {
+          await _secureStorage.write(key: 'isBiometricEnabled', value: 'true');
+          await _secureStorage.write(key: 'biometricDeviceId', value: deviceId);
+          setState(() => _isBiometricEnabled = true);
+        } else {
+          _showError(bioRes.message ?? 'Failed to enable Biometric.');
+        }
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -158,7 +187,7 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Face ID',
+          'Security Settings',
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -180,7 +209,7 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Enabling Face ID allows you to log into\nM-Pesa and authorise transactions',
+                'Enabling security features allows you to log into\nM-Pesa and authorise transactions',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -217,28 +246,34 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
               ),
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider, height: 1),
-              const SizedBox(height: 20),
-              RichText(
-                text: TextSpan(
-                  text: 'PIN entry Face ID is ',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                  children: [
-                    TextSpan(
-                      text: _isFaceIdEnabled ? 'switched on' : 'switched off',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Enable Biometric (Fingerprint)',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
-                  ],
-                ),
+                  ),
+                  _isLoading
+                      ? const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : CupertinoSwitch(
+                          value: _isBiometricEnabled,
+                          activeColor: const Color(0xFF00B0FF),
+                          onChanged: _toggleBiometric,
+                        ),
+                ],
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Please note that any biometric stored on your device can be used to log into M-Pesa. You can switch off Face ID and return to PIN usage at anytime',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
-              ),
+              const Divider(color: AppColors.divider, height: 1),
+              const SizedBox(height: 20),
             ],
           ),
         ),

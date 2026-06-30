@@ -730,6 +730,7 @@ class _LoanDetailsScreenState extends State<LoanDetailsScreen> {
                               builder: (_) => PaymentUpdateModal(
                                 personId: _details!.id,
                                 loanId: _details!.loans.first.id ?? 0,
+                                currentPendingPrincipal: _details!.loans.first.pendingAmount,
                               ),
                             );
                             if (result == true) _fetchDetails();
@@ -802,6 +803,7 @@ class _LoanDetailsScreenState extends State<LoanDetailsScreen> {
                               builder: (_) => PaymentUpdateModal(
                                 personId: _details!.id,
                                 loanId: _details!.loans.first.id ?? 0,
+                                currentPendingPrincipal: _details!.loans.first.pendingAmount,
                               ),
                             );
                             if (result == true) _fetchDetails();
