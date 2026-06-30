@@ -33,6 +33,8 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
   final _localAuth = LocalAuthentication();
   bool _isFaceIdAvailable = false;
   bool _isFaceIdEnabled = false;
+  bool _isBiometricEnabled = false;
+  bool _showBiometricSection = false;
 
   @override
   void initState() {
@@ -47,11 +49,19 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
       if (canCheckBiometrics && isDeviceSupported) {
         if (mounted) setState(() => _isFaceIdAvailable = true);
         
-        final isEnabled = await _secureStorage.read(key: 'isFaceEnabled');
+        final faceEnabled = await _secureStorage.read(key: 'isFaceEnabled');
+        final bioEnabled = await _secureStorage.read(key: 'isBiometricEnabled');
         final email = await _secureStorage.read(key: 'email');
         final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
-        if (isEnabled != 'false' && email != null && deviceId != null) {
-          if (mounted) setState(() => _isFaceIdEnabled = true);
+
+        if (email != null && deviceId != null) {
+          if (mounted) {
+            setState(() {
+              _isFaceIdEnabled = faceEnabled == 'true';
+              _isBiometricEnabled = bioEnabled == 'true';
+              _showBiometricSection = _isFaceIdEnabled || _isBiometricEnabled;
+            });
+          }
         }
       }
     } catch (e) {
@@ -156,9 +166,6 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
           await _secureStorage.write(key: 'email', value: _emailCtrl.text.trim());
 
           if (!mounted) return;
-
-
-          if (!mounted) return;
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
             (_) => false,
@@ -182,9 +189,15 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
   }
 
   Future<void> _handleFaceLogin() async {
+    final enabled = await _secureStorage.read(key: 'isFaceEnabled');
+    if (enabled != 'true') {
+      _showError('Face ID is not enabled. Please enable it in Settings.');
+      return;
+    }
+
     try {
       final didAuthenticate = await _localAuth.authenticate(
-        localizedReason: 'Please authenticate to sign in',
+        localizedReason: 'Please authenticate to sign in with Face ID',
       );
 
       if (didAuthenticate) {
@@ -196,35 +209,70 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
           final res = await FaceAuthRepository.instance.faceLogin(email, deviceId);
           setState(() => _isLoading = false);
 
-          if (res.isSuccess && res.data != null) {
-            final loginRes = LoginResponse.fromJson(res.data!);
-            if (loginRes.accountStatus?.toLowerCase() == 'deactivated' || loginRes.accountStatus?.toLowerCase() == 'inactive') {
-              _showError('Your account is deactivated! Contact super admin for assistance');
-              return;
-            }
-
-            if (loginRes.hasToken) {
-              await AuthRepository.instance.saveSession(loginRes);
-              await _secureStorage.write(key: 'token', value: loginRes.token);
-              
-              if (!mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-                (_) => false,
-              );
-              _showSuccess('Sign in successful!');
-            } else {
-              _showError('Login succeeded but no token was returned.');
-            }
-          } else {
-            _showError(res.message ?? 'Face Login Failed');
-          }
+          _processFaceAuthResponse(res);
         } else {
            _showError('Credentials not found. Please login with password first.');
         }
       }
     } catch (e) {
       if (mounted) _showError('Face authentication failed.');
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final enabled = await _secureStorage.read(key: 'isBiometricEnabled');
+    if (enabled != 'true') {
+      _showError('Biometric login is not enabled. Please enable it in Settings.');
+      return;
+    }
+
+    try {
+      final didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Please authenticate to sign in with Fingerprint',
+      );
+
+      if (didAuthenticate) {
+        final email = await _secureStorage.read(key: 'email');
+        final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
+
+        if (email != null && deviceId != null) {
+          setState(() => _isLoading = true);
+          final res = await FaceAuthRepository.instance.bioLogin(email, deviceId);
+          setState(() => _isLoading = false);
+
+          _processFaceAuthResponse(res);
+        } else {
+           _showError('Credentials not found. Please login with password first.');
+        }
+      }
+    } catch (e) {
+      if (mounted) _showError('Biometric authentication failed.');
+    }
+  }
+
+  void _processFaceAuthResponse(FaceAuthResponse res) async {
+    if (res.isSuccess && res.data != null) {
+      final loginRes = LoginResponse.fromJson(res.data!);
+      if (loginRes.accountStatus?.toLowerCase() == 'deactivated' || loginRes.accountStatus?.toLowerCase() == 'inactive') {
+        _showError('Your account is deactivated! Contact super admin for assistance');
+        return;
+      }
+
+      if (loginRes.hasToken) {
+        await AuthRepository.instance.saveSession(loginRes);
+        await _secureStorage.write(key: 'token', value: loginRes.token);
+        
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+          (_) => false,
+        );
+        _showSuccess('Sign in successful!');
+      } else {
+        _showError('Login succeeded but no token was returned.');
+      }
+    } else {
+      _showError(res.message ?? 'Login Failed');
     }
   }
 
@@ -355,81 +403,71 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
                   ),
                 ),
                 const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(child: _DashedDivider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'Or login using biometric',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: _DashedDivider()),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        _FaceScanIcon(
-                          size: 32,
-                          color: AppColors.textPrimary,
-                        ),
-                        const SizedBox(width: 18),
-                        Icon(
-                          Icons.fingerprint,
-                          size: 35,
-                          color: AppColors.textPrimary,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 44,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: AppColors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 36),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                        ),
-                        onPressed: () {},
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                if (_showBiometricSection) ...[
+                  Row(
+                    children: [
+                      Expanded(child: _DashedDivider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Or login using biometric',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-               /* if (_isFaceIdEnabled) ...[
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 56,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryBlue,
-                        side: BorderSide(color: AppColors.primaryBlue),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(35),
-                        ),
-                      ),
-                      icon: const Icon(Icons.fingerprint),
-                      label: const Text('Login with Face ID', style: TextStyle(fontWeight: FontWeight.bold)),
-                      onPressed: _isLoading ? null : _handleFaceLogin,
-                    ),
+                      Expanded(child: _DashedDivider()),
+                    ],
                   ),
-                ],*/
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _isLoading ? null : _handleFaceLogin,
+                            child: _FaceScanIcon(
+                              size: 32,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 18),
+                          GestureDetector(
+                            onTap: _isLoading ? null : _handleBiometricLogin,
+                            child: Icon(
+                              Icons.fingerprint,
+                              size: 35,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      /* SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                            foregroundColor: AppColors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 36),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                          ),
+                          onPressed: () {},
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ), */
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
