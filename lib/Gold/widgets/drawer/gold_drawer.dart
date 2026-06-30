@@ -31,11 +31,11 @@ class GoldDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _SectionHeader(title: 'App Settings', hasBackground: true),
+                 /* _SectionHeader(title: 'App Settings', hasBackground: true),
                   _DrawerItem(icon: Icons.favorite_border, title: 'Favourites', onTap: () {}),
                   _DrawerItem(icon: Icons.language, title: 'Language', onTap: () {}),
                   _DrawerItem(icon: Icons.settings_outlined, title: 'Settings', onTap: () {}),
-                  
+                  */
                   _SectionHeader(title: 'Security'),
                   _DrawerItem(
                     icon: Icons.face_unlock_outlined,
@@ -86,7 +86,7 @@ class GoldDrawer extends StatelessWidget {
                   _DrawerItem(icon: Icons.description_outlined, title: 'Terms & Conditions', onTap: () {}),
                   _DrawerItem(icon: Icons.help_outline, title: 'Help', onTap: () {}),
                   _DrawerItem(icon: Icons.info_outline, title: 'About', onTap: () {}),
-                  _DrawerItem(icon: Icons.delete_outline, title: 'Trash', onTap: () {}),
+                  //_DrawerItem(icon: Icons.delete_outline, title: 'Trash', onTap: () {}),
                 ],
               ),
             ),

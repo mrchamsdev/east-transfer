@@ -179,7 +179,11 @@ class _GoldWelcomeScreenState extends State<GoldWelcomeScreen>
   Future<void> _checkAndAutoLogin() async {
     try {
       final isEnabled = await _secureStorage.read(key: 'isFaceEnabled');
-      if (isEnabled != 'true') return;
+      if (isEnabled == 'false') return;
+
+      final email = await _secureStorage.read(key: 'email');
+      final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
+      if (email == null || deviceId == null) return;
 
       final canCheck = await _localAuth.canCheckBiometrics;
       final isSupported = await _localAuth.isDeviceSupported();
@@ -391,7 +395,7 @@ class _GoldWelcomeScreenState extends State<GoldWelcomeScreen>
                                   ),
                                 ),
                                 // Biometric login button (visible only if Face ID is enabled)
-                                if (_isFaceIdEnabled) ...[
+                                /*if (_isFaceIdEnabled) ...[
                                   SizedBox(height: h * 0.015),
                                   SizedBox(
                                     width: double.infinity,
@@ -427,7 +431,7 @@ class _GoldWelcomeScreenState extends State<GoldWelcomeScreen>
                                       onPressed: _isBioLoading ? null : _handleBiometricLogin,
                                     ),
                                   ),
-                                ],
+                                ],*/
                               ],
                             ),
                           ),

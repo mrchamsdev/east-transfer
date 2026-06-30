@@ -3,6 +3,7 @@ import '../utils/app_theme.dart';
 import '../widgets/bank_loader.dart';
 import '../services/api_service.dart';
 import '../utils/custom_dialog.dart';
+import 'package:bank_scan/Gold/core/constants/app_colors.dart'; // adjust path to match this file's location
 
 class AddUserScreen extends StatefulWidget {
   const AddUserScreen({super.key});
@@ -266,10 +267,27 @@ class _AddUserScreenState extends State<AddUserScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
+        /*leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
-        ),
+        )
+        */
+        leading: Padding(
+      padding: const EdgeInsets.only(left: 16.0),
+     child: Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: AppColors.white,
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: IconButton(
+      padding: EdgeInsets.zero,
+      icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 14),
+      onPressed: () => Navigator.pop(context),
+    ),
+  ),
+),
         title: const Text(
           'Add User',
           style: TextStyle(

@@ -153,7 +153,11 @@ class _ExpenseDetailsScreenState extends State<ExpenseDetailsScreen> {
         backgroundColor: AppColors.scaffoldBackground,
         appBar: GoldAppBar(
           showSearch: false,
+          
           title: 'View Details',
+ // titleFontSize: 16.sp,
+  //titleFontWeight: FontWeight.w500,
+          
           showBackButton: true,
           onBackPressed: () => AppRoutes.pop(context, _hasChanges),
           centerTitle: true,

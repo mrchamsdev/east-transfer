@@ -12,6 +12,7 @@ import 'package:bank_scan/Gold/features/auth/repository/auth_repository.dart';
 import 'package:bank_scan/Gold/features/auth/repository/face_auth_repository.dart';
 import 'package:bank_scan/Gold/features/auth/screens/forgot_password_screen.dart';
 import 'package:bank_scan/Gold/features/main/main_navigation_screen.dart';
+import '../../../widgets/gold_back_button.dart';
 
 /// Gold Sign-In Screen
 /// POST  users/login  →  { "email": "...", "passWord": "..." }
@@ -47,7 +48,9 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
         if (mounted) setState(() => _isFaceIdAvailable = true);
         
         final isEnabled = await _secureStorage.read(key: 'isFaceEnabled');
-        if (isEnabled == 'true') {
+        final email = await _secureStorage.read(key: 'email');
+        final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
+        if (isEnabled != 'false' && email != null && deviceId != null) {
           if (mounted) setState(() => _isFaceIdEnabled = true);
         }
       }
@@ -234,10 +237,7 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const GoldBackButton(),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -354,7 +354,65 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
                         : Text('SIGN IN', style: AppTextStyles.buttonText),
                   ),
                 ),
-                if (_isFaceIdEnabled) ...[
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(child: _DashedDivider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'Or login using biometric',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: _DashedDivider()),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        _FaceScanIcon(
+                          size: 32,
+                          color: AppColors.textPrimary,
+                        ),
+                        const SizedBox(width: 18),
+                        Icon(
+                          Icons.fingerprint,
+                          size: 35,
+                          color: AppColors.textPrimary,
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: AppColors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                        ),
+                        onPressed: () {},
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+               /* if (_isFaceIdEnabled) ...[
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 56,
@@ -371,7 +429,7 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
                       onPressed: _isLoading ? null : _handleFaceLogin,
                     ),
                   ),
-                ],
+                ],*/
               ],
             ),
           ),
@@ -410,6 +468,215 @@ class _GoldSignInScreenState extends State<GoldSignInScreen> {
           vertical: 16,
         ),
       );
+}
+class _DashedDivider extends StatelessWidget {
+  const _DashedDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 1,
+      child: CustomPaint(
+        painter: _DashedLinePainter(),
+        size: const Size(double.infinity, 1),
+      ),
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.textSecondary.withOpacity(0.4)
+      ..strokeWidth = 1;
+    const dashWidth = 4.0;
+    const dashSpace = 3.0;
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, 0),
+        Offset(startX + dashWidth, 0),
+        paint,
+      );
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+class _FaceScanIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _FaceScanIcon({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _FaceScanPainter(color: color),
+    );
+  }
+}
+
+/*class _FaceScanPainter extends CustomPainter {
+  final Color color;
+
+  _FaceScanPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.07
+      ..strokeCap = StrokeCap.round;
+
+    final w = size.width;
+    final h = size.height;
+    final cornerLen = w * 0.22;
+    const r = 3.0;
+
+    // Top-left corner bracket
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, cornerLen)
+        ..lineTo(0, r)
+        ..arcToPoint(Offset(r, 0), radius: const Radius.circular(r))
+        ..lineTo(cornerLen, 0),
+      paint,
+    );
+
+    // Top-right corner bracket
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - cornerLen, 0)
+        ..lineTo(w - r, 0)
+        ..arcToPoint(Offset(w, r), radius: const Radius.circular(r))
+        ..lineTo(w, cornerLen),
+      paint,
+    );
+
+    // Bottom-left corner bracket
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h - cornerLen)
+        ..lineTo(0, h - r)
+        ..arcToPoint(Offset(r, h), radius: const Radius.circular(r))
+        ..lineTo(cornerLen, h),
+      paint,
+    );
+
+    // Bottom-right corner bracket
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - cornerLen, h)
+        ..lineTo(w - r, h)
+        ..arcToPoint(Offset(w, h - r), radius: const Radius.circular(r))
+        ..lineTo(w, h - cornerLen),
+      paint,
+    );
+
+    // Simple face: two dot eyes + curved smile
+    final eyePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final eyeRadius = w * 0.05;
+    canvas.drawCircle(Offset(w * 0.36, h * 0.42), eyeRadius, eyePaint);
+    canvas.drawCircle(Offset(w * 0.64, h * 0.42), eyeRadius, eyePaint);
+
+    final smilePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+    final smilePath = Path()
+      ..moveTo(w * 0.36, h * 0.62)
+      ..quadraticBezierTo(w * 0.5, h * 0.72, w * 0.64, h * 0.62);
+    canvas.drawPath(smilePath, smilePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+*/
+class _FaceScanPainter extends CustomPainter {
+  final Color color;
+
+  _FaceScanPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.07
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.miter;
+
+    final w = size.width;
+    final h = size.height;
+    final cornerLen = w * 0.22;
+
+    // Top-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, cornerLen)
+        ..lineTo(0, 0)
+        ..lineTo(cornerLen, 0),
+      paint,
+    );
+
+    // Top-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - cornerLen, 0)
+        ..lineTo(w, 0)
+        ..lineTo(w, cornerLen),
+      paint,
+    );
+
+    // Bottom-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h - cornerLen)
+        ..lineTo(0, h)
+        ..lineTo(cornerLen, h),
+      paint,
+    );
+
+    // Bottom-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(w - cornerLen, h)
+        ..lineTo(w, h)
+        ..lineTo(w, h - cornerLen),
+      paint,
+    );
+
+    // Simple face: two dot eyes + curved smile
+    final eyePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final eyeRadius = w * 0.05;
+    canvas.drawCircle(Offset(w * 0.36, h * 0.42), eyeRadius, eyePaint);
+    canvas.drawCircle(Offset(w * 0.64, h * 0.42), eyeRadius, eyePaint);
+
+    final smilePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+    final smilePath = Path()
+      ..moveTo(w * 0.36, h * 0.62)
+      ..quadraticBezierTo(w * 0.5, h * 0.72, w * 0.64, h * 0.62);
+    canvas.drawPath(smilePath, smilePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 

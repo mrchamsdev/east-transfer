@@ -8,6 +8,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/gold_session.dart';
 import '../../auth/repository/face_auth_repository.dart';
+import '../../../widgets/gold_back_button.dart';
 
 class FaceIdScreen extends StatefulWidget {
   const FaceIdScreen({super.key});
@@ -19,7 +20,7 @@ class FaceIdScreen extends StatefulWidget {
 class _FaceIdScreenState extends State<FaceIdScreen> {
   final _secureStorage = const FlutterSecureStorage();
   final _localAuth = LocalAuthentication();
-  bool _isFaceIdEnabled = false;
+  bool _isFaceIdEnabled = true;
   bool _isLoading = false;
 
   @override
@@ -30,10 +31,41 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
 
   Future<void> _loadState() async {
     final enabled = await _secureStorage.read(key: 'isFaceEnabled');
+    final deviceId = await _secureStorage.read(key: 'biometricDeviceId');
+
+    if (enabled == 'false') {
+      if (mounted) {
+        setState(() {
+          _isFaceIdEnabled = false;
+        });
+      }
+      return;
+    }
+
     if (mounted) {
       setState(() {
-        _isFaceIdEnabled = enabled == 'true';
+        _isFaceIdEnabled = true;
       });
+    }
+
+    if (enabled != 'true' || deviceId == null) {
+      try {
+        final canCheck = await _localAuth.canCheckBiometrics;
+        final isSupported = await _localAuth.isDeviceSupported();
+        if (canCheck && isSupported) {
+          final token = GoldSession.instance.token;
+          if (token != null && token.isNotEmpty) {
+            final newDeviceId = await _getDeviceId();
+            final res = await FaceAuthRepository.instance.enableFace(token, newDeviceId);
+            if (res.isSuccess) {
+              await _secureStorage.write(key: 'isFaceEnabled', value: 'true');
+              await _secureStorage.write(key: 'biometricDeviceId', value: newDeviceId);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Silent auto-register in settings failed: $e');
+      }
     }
   }
 
@@ -122,16 +154,7 @@ class _FaceIdScreenState extends State<FaceIdScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300),
-              color: Colors.white,
-            ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black),
-          ),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:bank_scan/Gold/core/constants/app_colors.dart';
 import 'package:bank_scan/Gold/core/constants/app_text_styles.dart';
 import 'package:bank_scan/Gold/features/auth/models/auth_models.dart';
+import 'package:bank_scan/Gold/widgets/gold_back_button.dart';
 import 'package:bank_scan/Gold/features/auth/repository/auth_repository.dart';
 import 'package:bank_scan/Gold/features/auth/screens/sign_in_screen.dart';
 import 'package:bank_scan/Gold/features/auth/screens/password_changed_screen.dart';
@@ -119,8 +120,7 @@ class _GoldSignUpScreenState extends State<GoldSignUpScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/gold_session.dart';
 import '../../auth/repository/auth_repository.dart';
+import '../../../widgets/gold_back_button.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -185,16 +186,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.scaffoldBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300),
-              color: Colors.white,
-            ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black),
-          ),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -202,7 +194,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         centerTitle: true,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/gold_session.dart';
 import '../../../widgets/no_access_widget.dart';
+import '../../../widgets/gold_back_button.dart';
 import '../models/user_model.dart';
 import '../repository/user_repository.dart';
 import 'add_user_modal.dart';
@@ -98,16 +99,15 @@ class _UsersScreenState extends State<UsersScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
+        leading: GoldBackButton(
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'User Access',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
           ),
         ),
         actions: [

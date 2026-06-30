@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:bank_scan/Gold/core/constants/app_colors.dart';
 import 'package:bank_scan/Gold/core/network/gold_session.dart';
+import 'package:bank_scan/Gold/features/gold/screens/gold_screen.dart';
 import 'package:bank_scan/Gold/widgets/no_access_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -14,18 +16,45 @@ class LoansScreen extends StatefulWidget {
   State<LoansScreen> createState() => LoansScreenState();
 }
 
-class LoansScreenState extends State<LoansScreen> {
+class LoansScreenState extends State<LoansScreen> with RouteAware {
   final LoanRepository _repository = LoanRepository();
   bool _isLoading = true;
   List<LoanRecord> _allRecords = [];
   List<LoanRecord> _records = [];
   List<LoanDue> _allDues = [];
   List<LoanDue> _dues = [];
+  StreamSubscription<List<LoanRecord>>? _recordsSubscription;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _recordsSubscription = _repository.loanRecordsStream.listen((_) {
+      if (mounted) {
+        _fetchData(showLoader: false);
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      goldRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    goldRouteObserver.unsubscribe(this);
+    _recordsSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _fetchData(showLoader: false);
   }
 
   void filterLoans(String query) {
@@ -59,21 +88,25 @@ class LoansScreenState extends State<LoansScreen> {
     });
   }
 
-  Future<void> _fetchData() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchData({bool showLoader = true}) async {
+    if (showLoader) {
+      setState(() => _isLoading = true);
+    }
     try {
       final records = await _repository.getRecords();
       final dues = await _repository.getDues();
-      setState(() {
-        _allRecords = records;
-        _records = records;
-        _allDues = dues;
-        _dues = dues;
-      });
+      if (mounted) {
+        setState(() {
+          _allRecords = records;
+          _records = records;
+          _allDues = dues;
+          _dues = dues;
+        });
+      }
     } catch (e) {
       // Handle error gracefully
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && showLoader) setState(() => _isLoading = false);
     }
   }
 
@@ -171,8 +204,16 @@ class LoansScreenState extends State<LoansScreen> {
     return GestureDetector(
       onTap: () async {
         final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoanDetailsScreen(personId: person.personId)));
-        if (result == true) _fetchData();
+        if (result == true) _fetchData(showLoader: false);
       },
+      
+      /*return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoanDetailsScreen(personId: due.personId, alwaysShowPayInterest: true)));
+        if (result == true) _fetchData(showLoader: false);
+      },
+      */
+      
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
@@ -259,10 +300,15 @@ class LoansScreenState extends State<LoansScreen> {
     } catch (_) {}
 
     return GestureDetector(
-      onTap: () async {
+      /*onTap: () async {
         final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoanDetailsScreen(personId: due.personId)));
-        if (result == true) _fetchData();
+        if (result == true) _fetchData(showLoader: false);
       },
+      */
+      onTap: () async {
+  final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoanDetailsScreen(personId: due.personId, alwaysShowPayInterest: true)));
+  if (result == true) _fetchData(showLoader: false);
+},
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),

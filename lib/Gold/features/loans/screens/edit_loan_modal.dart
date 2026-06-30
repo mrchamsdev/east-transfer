@@ -49,7 +49,12 @@ class _EditLoanModalState extends State<EditLoanModal> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 70,
+    );
     if (image != null) {
       setState(() {
         _agreementImagePath = image.path;

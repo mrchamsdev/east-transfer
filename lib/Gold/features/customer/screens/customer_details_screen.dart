@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/responsive_extensions.dart';
 import '../../../core/utils/screen_utility.dart';
+import '../../../widgets/gold_back_button.dart';
 import '../models/customer_model.dart';
 import '../repository/customer_repository.dart';
 import '../../gold/models/gold_purchase_model.dart';
@@ -113,16 +114,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary, size: 20),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Customer Details',
           style: AppTextStyles.h1.copyWith(
-            fontSize: 13.sp,
+            fontSize: 16,
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500,
 
           ),
         ),

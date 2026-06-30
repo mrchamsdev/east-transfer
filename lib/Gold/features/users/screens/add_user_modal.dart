@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../widgets/gold_dialogs.dart';
 import '../../../widgets/gold_detail_input.dart';
+import '../../../widgets/gold_back_button.dart';
 import '../../../core/network/gold_session.dart';
 import '../models/user_model.dart';
 import '../repository/user_repository.dart';
@@ -185,8 +186,7 @@ class _AddUserModalState extends State<AddUserModal> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary, size: 20),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -194,7 +194,7 @@ class _AddUserModalState extends State<AddUserModal> {
           style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500,
           ),
         ),
         centerTitle: true,

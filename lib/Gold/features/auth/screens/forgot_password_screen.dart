@@ -5,6 +5,7 @@ import 'package:bank_scan/Gold/core/constants/app_text_styles.dart';
 import 'package:bank_scan/Gold/features/auth/models/auth_models.dart';
 import 'package:bank_scan/Gold/features/auth/repository/auth_repository.dart';
 import 'package:bank_scan/Gold/features/auth/screens/verify_code_screen.dart';
+import 'package:bank_scan/Gold/widgets/gold_back_button.dart';
 
 /// Forgot Password Screen
 /// POST  users/requestForPassword  →  { "email": "..." }
@@ -98,8 +99,7 @@ class _GoldForgotPasswordScreenState extends State<GoldForgotPasswordScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        leading: GoldBackButton(
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -148,7 +148,7 @@ class _GoldForgotPasswordScreenState extends State<GoldForgotPasswordScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isLoading
-                          ? AppColors.primaryBlue.withOpacity(0.7)
+                          ? AppColors.primaryBlue.withValues(alpha: 0.7)
                           : AppColors.primaryBlue,
                       foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(

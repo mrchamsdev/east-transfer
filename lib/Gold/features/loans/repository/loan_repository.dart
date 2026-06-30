@@ -89,6 +89,8 @@ class LoanRepository {
     try {
       const url = '/loan/person';
       final formData = FormData.fromMap(data);
+      debugPrint('📦 FormData fields: ${formData.fields}');
+      debugPrint('📦 FormData files: ${formData.files.map((e) => e.key).toList()}');
       if (idProofImagePath != null) {
         formData.files.add(MapEntry('idProofImage', await MultipartFile.fromFile(idProofImagePath, filename: idProofImagePath.split('/').last)));
       }
@@ -161,6 +163,8 @@ class LoanRepository {
     try {
       const url = '/loan/loan';
       final formData = FormData.fromMap(data);
+      debugPrint('📦 FormData fields: ${formData.fields}');
+      debugPrint('📦 FormData files: ${formData.files.map((e) => e.key).toList()}');
       if (agreementImagePath != null) {
         formData.files.add(MapEntry('agreementImage', await MultipartFile.fromFile(agreementImagePath, filename: agreementImagePath.split('/').last)));
       }
