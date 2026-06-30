@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/network/gold_session.dart';
 import '../../../widgets/gold_dialogs.dart';
 import '../../../widgets/no_access_widget.dart';
+import '../../../widgets/gold_back_button.dart';
 import '../models/user_model.dart';
 import '../repository/user_repository.dart';
 import 'add_user_modal.dart';
@@ -100,9 +101,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
+        leading: GoldBackButton(
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.userName ?? 'User Details',

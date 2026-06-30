@@ -36,7 +36,12 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 70,
+    );
     if (image != null) {
       setState(() {
         _selectedFilePath = image.path;

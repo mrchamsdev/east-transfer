@@ -7,6 +7,7 @@ import 'package:bank_scan/Gold/core/utils/responsive_extensions.dart';
 import 'package:bank_scan/Gold/core/utils/screen_utility.dart';
 import 'package:bank_scan/Gold/widgets/gold_app_bar.dart';
 import 'package:bank_scan/Gold/widgets/gold_dialogs.dart';
+import 'package:bank_scan/Gold/widgets/gold_back_button.dart';
 import '../widgets/party_details_card.dart';
 import '../widgets/billed_item_card.dart';
 import '../models/gold_purchase_model.dart';
@@ -295,9 +296,7 @@ class _GoldDetailsScreenState extends State<GoldDetailsScreen> {
                   fontSize: 14.sp, fontWeight: FontWeight.bold)),
           elevation: 0,
           backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new,
-                color: AppColors.textPrimary, size: 18.sp),
+          leading: GoldBackButton(
             onPressed: () => AppRoutes.pop(context),
           ),
         ),
@@ -335,6 +334,7 @@ class _GoldDetailsScreenState extends State<GoldDetailsScreen> {
         showSearch: false,
         title: isSold ? 'Sale Details' : 'View Details',
         showBackButton: true,
+
         centerTitle: true,
         showNotification: false,
         actions: [

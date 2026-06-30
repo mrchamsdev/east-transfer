@@ -1,6 +1,7 @@
 import 'package:bank_scan/Gold/widgets/gold_detail_input.dart';
 import 'package:bank_scan/Gold/widgets/gold_dialogs.dart';
 import 'package:bank_scan/Gold/widgets/gold_shimmer.dart';
+import 'package:bank_scan/Gold/widgets/gold_back_button.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import '../repository/gold_repository.dart';
@@ -473,36 +474,15 @@ class _AddGoldPurchaseScreenState extends State<AddGoldPurchaseScreen> {
                 ? 'Edit Gold Purchase'
                 : 'Add Gold Purchase',
             style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
           ),
           centerTitle: true,
-          automaticallyImplyLeading: false,
-          actions: [
-            Padding(
-              padding: EdgeInsets.only(right: 4.w),
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 9.w,
-                    height: 4.5.h,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF1F5F9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      color: AppColors.textPrimary,
-                      size: 20.sp,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          leading: GoldBackButton(
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
         body: GestureDetector(
           onTap: () {

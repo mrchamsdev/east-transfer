@@ -13,10 +13,13 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onNotificationPressed;
   final Function(String)? onSearchChanged;
   final VoidCallback? onBackPressed;
+  final double? titleFontSize;
+  final FontWeight? titleFontWeight; 
 
   const GoldAppBar({
     super.key,
     this.title,
+  
     this.showSearch = true,
     this.showNotification = true,
     this.showBackButton = false,
@@ -26,6 +29,9 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onNotificationPressed,
     this.onSearchChanged,
     this.onBackPressed,
+    this.titleFontSize,
+    this.titleFontWeight,
+
   });
 
 
@@ -45,12 +51,22 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         children: [
           // Circular Leading Button (Menu or Back)
-          _buildCircularButton(
-            icon: showBackButton ? Icons.arrow_back : Icons.menu,
+          /*_buildCircularButton(
+            icon: showBackButton ? Icons.arrow_back_ios_new : Icons.menu,
+            
             onPressed: showBackButton 
               ? (onBackPressed ?? () => AppRoutes.pop(context))
               : (onMenuPressed ?? () => Scaffold.of(context).openDrawer()),
           ),
+          */
+          _buildCircularButton(
+  icon: showBackButton ? Icons.arrow_back_ios_new : Icons.menu,
+  size: showBackButton ? 16 : 20,
+  onPressed: showBackButton 
+    ? (onBackPressed ?? () => AppRoutes.pop(context))
+    : (onMenuPressed ?? () => Scaffold.of(context).openDrawer()),
+),
+          
           const SizedBox(width: 12),
           // Search Bar or Title
           Expanded(
@@ -92,9 +108,9 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
                   alignment: centerTitle ? Alignment.center : Alignment.centerLeft,
                   child: Text(
                     title ?? '', 
-                    style: const TextStyle(
-                      fontSize: 14, 
-                      fontWeight: FontWeight.bold, 
+                    style:  TextStyle(
+                      fontSize: 16, 
+                      fontWeight: FontWeight.w500, 
                       color: AppColors.textPrimary
                     )
                   ),
@@ -102,22 +118,23 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 12),
           // Actions or Notification Button
-          if (actions != null)
+          /*if (actions != null)
             Row(children: actions!)
           else if (showNotification)
             _buildCircularButton(
               icon: Icons.notifications_none_outlined,
               onPressed: onNotificationPressed,
             ),
+            */
         ],
       ),
     );
   }
 
-  Widget _buildCircularButton({required IconData icon, VoidCallback? onPressed}) {
+  /*Widget _buildCircularButton({required IconData icon, VoidCallback? onPressed}) {
     return Container(
-      width: 44,
-      height: 44,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
@@ -129,11 +146,35 @@ class GoldAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(22),
-          child: Icon(icon, color: AppColors.textPrimary, size: 22),
+          child: Icon(icon, color: AppColors.textPrimary, size: 20),
         ),
       ),
     );
   }
+*/
+Widget _buildCircularButton({
+  required IconData icon,
+  VoidCallback? onPressed,
+  double size = 20,
+}) {
+  return Container(
+    width: 35,
+    height: 35,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: AppColors.white,
+      border: Border.all(color: const Color(0xFFF1F2F5)),
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(18),
+        child: Icon(icon, color: AppColors.textPrimary, size: size),
+      ),
+    ),
+  );
+}
 
   @override
   Size get preferredSize => const Size.fromHeight(64);

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/responsive_extensions.dart';
 import '../../../core/utils/screen_utility.dart';
+import '../../../widgets/gold_back_button.dart';
 import '../models/gold_purchase_model.dart';
 
 class AddGoldItemScreen extends StatefulWidget {
@@ -151,27 +152,8 @@ class _AddGoldItemScreenState extends State<AddGoldItemScreen> {
             ),
           ),
           centerTitle: true,
-          leadingWidth: 14.w,
-          leading: Padding(
-            padding: EdgeInsets.only(left: 4.w),
-            child: Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 9.w,
-                  height: 4.5.h,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF1F5F9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.chevron_left,
-                    color: AppColors.textPrimary,
-                    size: 20.sp,
-                  ),
-                ),
-              ),
-            ),
+          leading: GoldBackButton(
+            onPressed: () => Navigator.pop(context),
           ),
         ),
         body: Column(
