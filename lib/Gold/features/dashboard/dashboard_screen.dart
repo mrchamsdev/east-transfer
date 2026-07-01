@@ -1546,7 +1546,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _loadTelemetryData() async {
+  /*Future<void> _loadTelemetryData() async {
     try {
       final DashboardData? data = await DashboardRepository().getAdminDashboard(period: _selectedPeriod);
       if (data != null && mounted) {
@@ -1572,6 +1572,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await _loadTelemetryDataLocal();
     }
   }
+*/
+Future<void> _loadTelemetryData() async {
+    try {
+      // Fetch period-scoped portfolio summary AND un-scoped totals
+      // (loans/transactions) in parallel.
+      final results = await Future.wait([
+        DashboardRepository().getAdminDashboard(period: _selectedPeriod),
+        DashboardRepository().getAdminDashboardTotals(),
+      ]);
+
+      final DashboardData? periodData = results[0];
+      final DashboardData? totalsData = results[1];
+
+      if (mounted && (periodData != null || totalsData != null)) {
+        setState(() {
+          if (periodData != null) {
+            _totalInvestment = periodData.totalInvestment;
+            _totalPL = periodData.totalProfitLoss;
+            _todaysPL = periodData.todayProfitLoss;
+
+            _totalPLPercent = _totalInvestment > 0
+                ? (_totalPL / _totalInvestment) * 100
+                : 0.0;
+            _todaysPLPercent = _totalInvestment > 0
+                ? (_todaysPL / _totalInvestment) * 100
+                : 0.0;
+          }
+
+          if (totalsData != null) {
+            _loansOutstanding = totalsData.loansOutstanding;
+            _recentTransactionsCount = totalsData.recentTransactionsCount;
+          }
+        });
+      }
+
+      if (periodData == null && totalsData == null) {
+        await _loadTelemetryDataLocal();
+      }
+    } catch (e) {
+      debugPrint('[Dashboard] Telemetry remote load error: $e. Falling back to local aggregation.');
+      await _loadTelemetryDataLocal();
+    }
+  }
+  /// Refreshes ONLY the portfolio summary (Total Investment, Total P&L,
+  /// Today's P&L) when the period dropdown changes.
+  /// Does NOT touch Loans Outstanding or Recent Transactions — those stay
+  /// fixed from the initial dashboard load / pull-to-refresh only.
+  Future<void> _loadPortfolioSummaryForPeriod() async {
+    try {
+      final DashboardData? data =
+          await DashboardRepository().getAdminDashboard(period: _selectedPeriod);
+      if (data != null && mounted) {
+        setState(() {
+          _totalInvestment = data.totalInvestment;
+          _totalPL = data.totalProfitLoss;
+          _todaysPL = data.todayProfitLoss;
+
+          _totalPLPercent = _totalInvestment > 0
+              ? (_totalPL / _totalInvestment) * 100
+              : 0.0;
+          _todaysPLPercent = _totalInvestment > 0
+              ? (_todaysPL / _totalInvestment) * 100
+              : 0.0;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Dashboard] Portfolio summary period load error: $e');
+    }
+  }
+  
 
   Future<void> _loadTelemetryDataLocal() async {
     try {
@@ -2356,7 +2426,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _saveSetting('dashboard_period', p);
                   });
                   Navigator.pop(context);
-                  _loadTelemetryData();
+                  _loadPortfolioSummaryForPeriod();
                 },
               );
             }).toList(),

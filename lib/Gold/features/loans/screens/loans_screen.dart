@@ -305,10 +305,24 @@ class LoansScreenState extends State<LoansScreen> with RouteAware {
         if (result == true) _fetchData(showLoader: false);
       },
       */
-      onTap: () async {
+      /*onTap: () async {
   final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoanDetailsScreen(personId: due.personId, alwaysShowPayInterest: true)));
+  if (result == true) _fetchData(showLoader: false);*/
+  onTap: () async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => LoanDetailsScreen(
+        loanId: due.loanId,
+        alwaysShowPayInterest: true,
+        dueInterestAmount: due.interestAmount,
+      ),
+    ),
+  );
   if (result == true) _fetchData(showLoader: false);
 },
+
+
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
