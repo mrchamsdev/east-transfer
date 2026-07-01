@@ -183,7 +183,7 @@ class DashboardRepository {
         break;
       case 'Yesterday':
         start = now.subtract(const Duration(days: 1));
-        end = start;
+        end = now;
         break;
       case 'This Week':
         start = now.subtract(const Duration(days: 7));
@@ -215,4 +215,31 @@ class DashboardRepository {
     final day = date.day > daysInTargetMonth ? daysInTargetMonth : date.day;
     return DateTime(year, month, day);
   }
+
+  /// Fetches dashboard data with NO date filters — used only for
+  /// Loans Outstanding and Recent Transactions, which should always
+  /// reflect true totals regardless of the period dropdown.
+  Future<DashboardData?> getAdminDashboardTotals() async {
+    try {
+      const url = '/users/adminDashboard';
+      if (kDebugMode) debugPrint('🌐 GET ADMIN DASHBOARD TOTALS: $url (no params)');
+
+      final response = await _dio.get(url);
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data['data'];
+        if (data != null && data is Map<String, dynamic>) {
+          return DashboardData.fromJson(data);
+        }
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('❌ GET ADMIN DASHBOARD TOTALS ERROR: $e');
+      rethrow;
+    }
+  }
 }
+
+/// Fetches dashboard data with NO date filters — used only for
+  /// Loans Outstanding and Recent Transactions, which should always
+  /// reflect true totals regardless of the period dropdown.
+  

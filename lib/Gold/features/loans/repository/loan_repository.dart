@@ -307,4 +307,22 @@ class LoanRepository {
       return false;
     }
   }
+  Future<Loan?> getLoanById(int loanId) async {
+    try {
+      final url = '/loan/loan/$loanId';
+      if (kDebugMode) debugPrint('🌐 GET LOAN BY ID: $url');
+
+      final response = await _dio.get(url);
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data['data'];
+        if (data != null && data is Map<String, dynamic>) {
+          return Loan.fromJson(data);
+        }
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('❌ GET LOAN BY ID ERROR: $e');
+      rethrow;
+    }
+  }
 }

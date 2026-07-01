@@ -5,7 +5,7 @@ import '../../../widgets/gold_detail_input.dart';
 import '../repository/loan_repository.dart';
 import 'package:image_picker/image_picker.dart';
 
-class PaymentUpdateModal extends StatefulWidget {
+/*class PaymentUpdateModal extends StatefulWidget {
   final int personId;
   final int loanId;
   final Map<String, dynamic>? initialData;
@@ -19,6 +19,28 @@ class PaymentUpdateModal extends StatefulWidget {
     this.initialData,
     this.paymentId,
     this.currentPendingPrincipal,
+  });
+
+  @override
+  State<PaymentUpdateModal> createState() => _PaymentUpdateModalState();
+}
+*/
+class PaymentUpdateModal extends StatefulWidget {
+  final int personId;
+  final int loanId;
+  final Map<String, dynamic>? initialData;
+  final int? paymentId;
+  final num? currentPendingPrincipal;
+  final num? initialInterestAmount; // NEW: pre-fills Interest Amount when opened from a due item
+
+  const PaymentUpdateModal({
+    super.key,
+    required this.personId,
+    required this.loanId,
+    this.initialData,
+    this.paymentId,
+    this.currentPendingPrincipal,
+    this.initialInterestAmount,
   });
 
   @override
@@ -67,11 +89,27 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
   };
 
   @override
-  void initState() {
+  /*void initState() {
     super.initState();
     _interestAmountType = 'RUPEES';
     _principalAmountType = 'RUPEES';
     _paymentType = 'CASH';
+    _principalAmountCtrl.addListener(_onPrincipalChanged);
+    _interestAmountCtrl.addListener(_onPrincipalChanged);
+    if (widget.initialData != null) {
+      final data = widget.initialData!;
+      _dateCtrl.text = data['paymentDate'] ?? '';
+      _interestAmountType = data['interestAmountType'] ?? 'RUPEES';
+      _interestAmountCtrl.text = data['interestAmount']?.toString() ?? '';
+      _principalAmountType = data['principalAmountType'] ?? 'RUPEES';
+      _principalAmountCtrl.text = data['principalAmount']?.toString() ?? '';
+      _remainingBalanceCtrl.text = data['remainingBalance']?.toString() ?? '';
+      _referenceNumberCtrl.text = data['referenceNUmber'] ?? '';
+      _paymentType = data['paymentTYpe'] ?? 'CASH';
+    } else if (widget.initialInterestAmount != null) {
+      // New payment opened from a due item — pre-fill interest amount.
+      _interestAmountCtrl.text = widget.initialInterestAmount!.toString();
+    }
     if (widget.initialData != null) {
       final data = widget.initialData!;
       _dateCtrl.text = data['paymentDate'] ?? '';
@@ -86,8 +124,43 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
     
     _principalAmountCtrl.addListener(_onPrincipalChanged);
   }
+  */
+  @override
+  void initState() {
+    super.initState();
+    _interestAmountType = 'RUPEES';
+    _principalAmountType = 'RUPEES';
+    _paymentType = 'CASH';
 
-  void _onPrincipalChanged() {
+    // Default date to today
+    final now = DateTime.now();
+    _dateCtrl.text = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    if (widget.initialData != null) {
+      final data = widget.initialData!;
+      _dateCtrl.text = data['paymentDate'] ?? _dateCtrl.text;
+      _interestAmountType = data['interestAmountType'] ?? 'RUPEES';
+      _interestAmountCtrl.text = data['interestAmount']?.toString() ?? '';
+      _principalAmountType = data['principalAmountType'] ?? 'RUPEES';
+      _principalAmountCtrl.text = data['principalAmount']?.toString() ?? '';
+      _remainingBalanceCtrl.text = data['remainingBalance']?.toString() ?? '';
+      _referenceNumberCtrl.text = data['referenceNUmber'] ?? '';
+      _paymentType = data['paymentTYpe'] ?? 'CASH';
+    } else {
+      // Default principal to 0
+      _principalAmountCtrl.text = '0';
+      if (widget.initialInterestAmount != null) {
+        _interestAmountCtrl.text = widget.initialInterestAmount!.toStringAsFixed(2);
+        // Default remaining balance = interest amount (since principal starts at 0)
+        _remainingBalanceCtrl.text = widget.initialInterestAmount!.toStringAsFixed(2);
+      }
+    }
+
+    _principalAmountCtrl.addListener(_onPrincipalChanged);
+    _interestAmountCtrl.addListener(_onPrincipalChanged);
+  }
+
+  /*void _onPrincipalChanged() {
     if (widget.currentPendingPrincipal != null) {
       final text = _principalAmountCtrl.text.trim();
       if (text.isEmpty) {
@@ -99,11 +172,35 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
         _remainingBalanceCtrl.text = remaining.toStringAsFixed(2);
       }
     }
+  }*/
+  void _onPrincipalChanged() {
+    final principalText = _principalAmountCtrl.text.trim();
+    final interestText = _interestAmountCtrl.text.trim();
+
+    if (principalText.isEmpty) {
+      _remainingBalanceCtrl.text = '';
+    } else {
+      final enteredPrincipal = double.tryParse(principalText) ?? 0.0;
+      final interestAmount = double.tryParse(interestText) ?? 0.0;
+      final remaining = interestAmount - enteredPrincipal;
+      _remainingBalanceCtrl.text = remaining.toStringAsFixed(2);
+    }
   }
 
   @override
+  /*void dispose() {
+    _principalAmountCtrl.removeListener(_onPrincipalChanged);
+    _dateCtrl.dispose();
+   
+    _remainingBalanceCtrl.dispose();
+    _referenceNumberCtrl.dispose();
+    super.dispose();
+  }
+  */
+  @override
   void dispose() {
     _principalAmountCtrl.removeListener(_onPrincipalChanged);
+    _interestAmountCtrl.removeListener(_onPrincipalChanged);
     _dateCtrl.dispose();
     _interestAmountCtrl.dispose();
     _principalAmountCtrl.dispose();
@@ -450,12 +547,6 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
                     hint: '0.00',
                     keyboardType: TextInputType.number,
                   ),
-                  if (_paymentType != 'CASH')
-                    GoldDetailInputField(
-                      label: 'Reference Number',
-                      controller: _referenceNumberCtrl,
-                      hint: 'Enter reference',
-                    ),
                   GoldDetailInputField(
                     label: 'Payment Type',
                     value: _paymentTypeNames[_paymentType] ?? 'Select Type',
@@ -468,6 +559,25 @@ class _PaymentUpdateModalState extends State<PaymentUpdateModal> {
                       (val) => setState(() => _paymentType = val),
                     ),
                   ),
+                  if (_paymentType != 'CASH')
+                    GoldDetailInputField(
+                      label: 'Reference Number',
+                      controller: _referenceNumberCtrl,
+                      hint: 'Enter reference',
+                    ),
+                 /* GoldDetailInputField(
+                    label: 'Payment Type',
+                    value: _paymentTypeNames[_paymentType] ?? 'Select Type',
+                    hint: 'Select type',
+                    onTap: () => _showSelectionBottomSheet(
+                      'Payment Type',
+                      ['CASH', 'UPI', 'BANK TRANSFER'],
+                      _paymentType,
+                      _paymentTypeNames,
+                      (val) => setState(() => _paymentType = val),
+                    ),
+                  ),
+                  */
                   GoldDetailInputField(
                     label: 'Upload Image',
                     value: _imagePath?.split('/').last,

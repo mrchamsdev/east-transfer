@@ -43,7 +43,7 @@ class LoanPersonRecord {
       );
 }
 
-class Loan {
+/*class Loan {
   final int? id;
   final int? loanId;
   final int? personId;
@@ -112,6 +112,90 @@ class Loan {
         status: json['status'],
         note: json['note'],
         paymentUpdates: (json['paymentUpdates'] as List?)?.map((e) => PaymentUpdate.fromJson(e)).toList() ?? [],
+      );
+}
+*/
+
+class Loan {
+  final int? id;
+  final int? loanId;
+  final int? personId;
+  final String? loanPeriodType;
+  final num? loanPeriod;
+  final String? loanDate;
+  final String? principalAmountType;
+  final num principalAmount;
+  final num? interestRate;
+  final num? interestAmount;
+  final String? interestAmountType;
+  final String? interestPaymentPeriodType;
+  final num? interestPaymentPeriod;
+  final String? agreementImage;
+  final num? totalPaidAmount;
+  final num? paid;
+  final num? pendingAmount;
+  final num? totalAmount;
+  final String? status;
+  final String? note;
+  final List<PaymentUpdate> paymentUpdates;
+  final PersonDetails? person; // NEW: present when fetched via /loan/loan/{id}
+
+  Loan({
+    this.id,
+    this.loanId,
+    this.personId,
+    this.loanPeriodType,
+    this.loanPeriod,
+    this.loanDate,
+    this.principalAmountType,
+    required this.principalAmount,
+    this.interestRate,
+    this.interestAmount,
+    this.interestAmountType,
+    this.interestPaymentPeriodType,
+    this.interestPaymentPeriod,
+    this.agreementImage,
+    this.totalPaidAmount,
+    this.paid,
+    this.pendingAmount,
+    this.totalAmount,
+    this.status,
+    this.note,
+    this.paymentUpdates = const [],
+    this.person,
+  });
+
+  factory Loan.fromJson(Map<String, dynamic> json) => Loan(
+        id: json['id'],
+        loanId: json['loanId'],
+        personId: json['personId'],
+        loanPeriodType: json['loanPeriodType'],
+        loanPeriod: json['loanPeriod'] != null ? num.tryParse(json['loanPeriod'].toString()) : null,
+        loanDate: json['loanDate'],
+        principalAmountType: json['principalAmountType'] ?? json['principalAmountTYpe'],
+        principalAmount: num.tryParse(json['principalAmount']?.toString() ?? '0') ?? 0,
+        interestRate: json['interestRate'] != null ? num.tryParse(json['interestRate'].toString()) : null,
+        interestAmount: json['interestAmount'] != null ? num.tryParse(json['interestAmount'].toString()) : null,
+        interestAmountType: json['interestAmountType'],
+        interestPaymentPeriodType: json['interestPaymentPeriodType'],
+        interestPaymentPeriod: json['interestPaymentPeriod'] != null ? num.tryParse(json['interestPaymentPeriod'].toString()) : null,
+        agreementImage: json['agreementImage'],
+        totalPaidAmount: json['totalPaidAmount'] != null ? num.tryParse(json['totalPaidAmount'].toString()) : null,
+        paid: json['paid'] != null ? num.tryParse(json['paid'].toString()) : null,
+        //pendingAmount: json['pendingAmount'] != null ? num.tryParse(json['pendingAmount'].toString()) : null,
+        pendingAmount: json['pendingAmount'] != null
+            ? num.tryParse(json['pendingAmount'].toString())
+            : (json['principalAmount'] != null && json['totalPaidAmount'] != null
+                ? (num.tryParse(json['principalAmount'].toString()) ?? 0) -
+                  (num.tryParse(json['totalPaidAmount'].toString()) ?? 0)
+                : null),
+        totalAmount: json['totalAmount'] != null ? num.tryParse(json['totalAmount'].toString()) : null,
+        status: json['status'],
+        note: json['note'],
+        paymentUpdates: (json['paymentUpdates'] as List?)?.map((e) => PaymentUpdate.fromJson(e)).toList() ?? [],
+        person: json['person'] != null && json['person'] is Map<String, dynamic>
+            ? PersonDetails.fromJson(json['person'] as Map<String, dynamic>)
+            : null,
       );
 }
 
